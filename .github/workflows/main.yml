@@ -3,7 +3,7 @@ name: Rust Auto Release
 on:
   push:
     tags:
-      - 'v*.*.*' # Dispara apenas para tags no formato vX.X.X
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -14,57 +14,68 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            executable: auto-presser-linux
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            executable: auto-presser-windows.exe
 
     steps:
-      # Checkout do repositório
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Instalar dependências necessárias para X11 e build tools
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential gcc pkg-config libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev libxrender-dev libxfixes-dev libxdo-dev
 
-      # Configurar Rust com a versão nightly
       - name: Install Rust nightly
-        run:  rustup default nightly
+        run: rustup default nightly
 
-      # Instalar targets adicionais (se necessário)
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
 
-      # Compilar o projeto
       - name: Build project
         run: cargo build --release --target=${{ matrix.target }}
 
-      # Adicionar artefatos ao release
+      - name: Rename binary
+        if: matrix.os == 'ubuntu-latest'
+        run: mv target/${{ matrix.target }}/release/auto-presser target/${{ matrix.target }}/release/${{ matrix.executable }}
+
+      - name: Rename binary
+        if: matrix.os == 'windows-latest'
+        run: mv target/${{ matrix.target }}/release/auto-presser.exe target/${{ matrix.target }}/release/${{ matrix.executable }}
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}-artifact
-          path: target/${{ matrix.target }}/release/
+          name: ${{ matrix.executable }}
+          path: target/${{ matrix.target }}/release/${{ matrix.executable }}
 
   release:
     name: Create Release
     needs: build
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout do repositório
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Download dos artefatos
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # Criar Release no GitHub
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
