@@ -19,6 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Rust nightly
+        run: rustup override set nightly
+
       # Instalar targets adicionais (se necessário)
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
