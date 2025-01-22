@@ -1,0 +1,55 @@
+name: Rust Auto Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # Dispara apenas para tags no formato vX.X.X
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        target: [x86_64-unknown-linux-gnu, x86_64-pc-windows-msvc]
+
+    steps:
+      # Checkout do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Instalar targets adicionais (se necessário)
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      # Compilar o projeto
+      - name: Build project
+        run: cargo build --release --target=${{ matrix.target }}
+
+      # Adicionar artefatos ao release
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}-artifact
+          path: target/${{ matrix.target }}/release/
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Criar Release no GitHub
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/x86_64-unknown-linux-gnu/release/*
+            target/x86_64-pc-windows-msvc/release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
