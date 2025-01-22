@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust nightly
-        run: rustup override set nightly
+        run: rustup default nightly
 
       # Instalar targets adicionais (se necessário)
       - name: Add Rust target
