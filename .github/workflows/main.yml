@@ -1,4 +1,4 @@
-name: Auto Build
+name: Rust Auto Release
 
 on:
   push:
@@ -19,8 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Configurar Rust com a versão nightly
       - name: Install Rust nightly
-        run: rustup default nightly
+        run:  rustup default nightly
 
       # Instalar targets adicionais (se necessário)
       - name: Add Rust target
