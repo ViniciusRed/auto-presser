@@ -1,4 +1,4 @@
-name: Rust Auto Release
+name: Auto Build
 
 on:
   push:
