@@ -22,6 +22,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Instalar dependências necessárias para X11
+      - name: Install X11 dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxext-dev libxft-dev libxinerama-dev libxcursor-dev libxrender-dev libxfixes-dev
+
       # Configurar Rust com a versão nightly
       - name: Install Rust nightly
         run:  rustup default nightly
